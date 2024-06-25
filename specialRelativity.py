@@ -167,7 +167,7 @@ class Material:
         direction += normal
         reflected = ray - 2*np.dot(ray,normal)*normal
         reflected += self.diffusion*direction
-        return FourVelocity_lightlike(self.freq,direction[0],direction[1],direction[2])
+        return FourVelocity_lightlike(self.freq,reflected[0],reflected[1],reflected[2])
         
     
 class Objects():
@@ -307,7 +307,7 @@ print(FourVector(1,1,0,0).lorentz_boost(np.array([0.5,0,0])).lorentz_boost(np.ar
 
 raytracer = Camera()
 
-image_array = raytracer.render(Objects([Sphere(FourVelocity(1,0,0,-0.8), FourVector(0,-3,0,-5), 3, Material(1,1,c/480,[0.7,0.4,0.2])),Sphere(FourVelocity(1,0,0,-0.9), FourVector(0,3,-1,4), 2, Material(0.5,0,c/720,[0.1,0.36,0.7])),Sphere(FourVelocity(1,0,0,0), FourVector(0,0,-1005,-1), 1000, Material(0.8,0.8,c/800,[0.9,0.8,0.8]))]))
+image_array = raytracer.render(Objects([Sphere(FourVelocity(1,0,0,0.5), FourVector(0,0,0,-7), 3, Material(1,0,c/480,[0.7,0.4,0.2])),Sphere(FourVelocity(1,0,0,-0.3), FourVector(0,3,-1,-4), 2, Material(1,0,c/720,[0.1,0.36,0.7])),Sphere(FourVelocity(1,0,0,0), FourVector(0,0,-1003.5,-1), 1000, Material(1,0,c/800,[0.9,0.8,0.8]))]))
 image_array*=255#, Sphere(FourVelocity(1,0,0,0), FourVector(0,0,-130,-1), 100, Material(1,1,c/720,[0.9,0.4,0.8]))
 image = Image.fromarray(image_array.astype(np.uint8))
 
