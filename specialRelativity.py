@@ -51,22 +51,6 @@ def wave_length_to_rgb(wavelength):
         blue = 0.0
     factor = 1.0
 
-    # else:
-    #     red = 0.0
-    #     green = 0.0
-    #     blue = 0.0
-
-    # # Intensity falloff near the vision limits
-    # if 380 <= wavelength < 420:
-    #     factor = 0.3 + 0.7 * (wavelength - 380) / (420 - 380)
-    # elif 420 <= wavelength < 701:
-    #     factor = 1.0
-    # elif 701 <= wavelength < 781:
-    #     factor = 0.3 + 0.7 * (780 - wavelength) / (780 - 700)
-    # else:
-    #     factor = 0.0
-
-    # Apply intensity factor and gamma correction
     rgb = [
         0 if red == 0.0 else int(round(IntensityMax * (red * factor) ** Gamma)),
         0 if green == 0.0 else int(round(IntensityMax * (green * factor) ** Gamma)),
@@ -113,7 +97,6 @@ class FourVector:
         r = np.array([self.vector[1], self.vector[2], self.vector[3]])
         ct_prime = gamma*(self.ct-np.dot(velocity,r)/c)
         r_prime = r + (gamma-1)*(np.dot(r,n)*n) - gamma*self.ct*velocity/c
-        #print("hello---------------------------------")
         return type(self)(ct_prime/c, r_prime[0],r_prime[1],r_prime[2])
 
 class FourVelocity(FourVector):
@@ -160,10 +143,7 @@ class Material:
             direction = -direction
         direction += normal
         reflected = ray - 2*np.dot(ray,normal)*normal
-        #print("lllllllooooooooooollllllll", ray, normal, reflected)
-        #return FourVelocity_lightlike(self.freq,reflected[0],reflected[1],reflected[2])
-        #print(FourVelocity_lightlike(1,direction[0],direction[1],direction[2]))
-        #return FourVelocity_lightlike(1,direction[0],direction[1],direction[2])
+        
         direction += normal
         reflected = ray - 2*np.dot(ray,normal)*normal
         reflected += self.diffusion*direction
@@ -184,13 +164,13 @@ class Objects():
 
         if not np.any(hits):
             return None
-        # Vectorize to get 't' values
+        
         vectorized_t = np.vectorize(lambda rec: -rec.time if rec else np.inf)
         hitvalues = vectorized_t(hits)
         
-        # Find index of minimum 't' value
+       
         min_index = np.argmin(hitvalues)
-        #print(hits[min_index].fourposition)
+        
         return hits[min_index]
     
 class Hit():
@@ -242,17 +222,13 @@ class Sphere(Object):
         time = observer_position.ct - root
         
         point = camera.three_vector + root * ray_direction
-        #print("hello", camera.three_vector, root*ray_direction)
+        
         outward_normal = (point - center.three_vector) / self.radius
-        #print("fler",outward_normal)
+        
         new_fourposition = FourVector(time/c, point[0],point[1],point[2]).lorentz_boost(-self.four_velocity.three_vector)
-        #print(observer_position,new_fourposition)
-        #print("dooogeyyy",new_fourposition,new_four_velocity_light)
+       
         new_four_velocity_light = self.material.scatter(ray_direction, outward_normal).lorentz_boost(-self.four_velocity.three_vector)
-        #print("he",light_velocity,new_four_velocity_light)
-        #direction and pitch, direction we can define easily through outward normal
-        #pitch we can obtain it through material with some calculation on pitch of previous ray
-        #print(new_fourposition,new_four_velocity_light)
+        
         return Hit(new_four_velocity_light, new_fourposition,time,self.material)
     
 class Camera:
@@ -281,22 +257,17 @@ class Camera:
         return
     def raytrace(self, four_velocity_lightlike: FourVelocity_lightlike, four_position: FourVector, objects: Objects, depth):
         hit = objects.hit(four_velocity_lightlike,four_position)
-        #if(hit):
-        #    print(depth, hit.fourposition)
         
         if(hit and depth>0):
             if(hit.material.lighting!=0):
                 return np.array([1,1,1])
-            #return hit.material.color*self.raytrace(hit.four_velocity_light,hit.fourposition, objects, depth-1)
             return freq_to_rgb(hit.four_velocity_light.ct)*self.raytrace(hit.four_velocity_light,hit.fourposition, objects, depth-1)
-            #return np.array([hit[0].ct, hit[0].ct, hit[0].ct])* (sphere.material.reflectance*self.raytrace(hit[0],hit[1],depth-1)) 
-        
-        #return np.array([1,1,1])
+           
         
         unit_direction = four_velocity_lightlike.three_vector/np.linalg.norm(four_velocity_lightlike.three_velocity)
         a = 0.7*(unit_direction[1] + 1.0)
         return ((1.0-a)*np.array([1.0,1.0,1.0]) + a*np.array([0.5, 0.5, 1.0]))
-        #return np.array([1,1,1])
+
     def render(self, objects):
         pixel_array = np.apply_along_axis(lambda vector: self.raytrace(FourVelocity_lightlike(1,vector[0],vector[1],vector[2]), FourVector(0,0,0,0),objects,10), 2, self.pixel_centers.astype(np.float32))
         pixel_array = np.clip(pixel_array, 0, 1)
